@@ -21,7 +21,13 @@ Create a `dependencies.json` file in your Dub project. It should look like this:
 }
 ```
 
-Then run `resolve`. It will create `.resolve` folder, clone the repositories and update `dub.selections.json`. Then you can build your project with Dub as usual.
+Then install Resolve and run it:
+
+`dub fetch resolve`
+
+`dub run resolve`
+
+It will create `.resolve` folder, clone the repositories and update `dub.selections.json`. Then you can build your project with Dub as usual.
 
 It is recommended to add `.resolve` folder to `.gitignore`. 
 
