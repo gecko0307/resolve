@@ -2,7 +2,7 @@
 A tool for D language that installs dependencies from arbitrary git repos/branches locally and points `dub.selections.json` to them. This helps to work on the project and its dependencies simultaneously without pushing.
 
 ## Usage
-Create a `dependencies.json` file in your Dub project. It should look like this:
+1. Create a `dependencies.json` file in your Dub project. It should look like this:
 
 ```json
 {
@@ -21,15 +21,15 @@ Create a `dependencies.json` file in your Dub project. It should look like this:
 }
 ```
 
-Then install Resolve and run it:
+2. Install Resolve and run it:
 
 `dub fetch resolve`
 
 `dub run resolve`
 
-It will create `.resolve` folder, clone the repositories and update `dub.selections.json`. Then you can build your project with Dub as usual.
+It will create `.resolve` folder, clone the repositories and update `dub.selections.json`. It is recommended to add `.resolve` folder to `.gitignore`. 
 
-It is recommended to add `.resolve` folder to `.gitignore`. 
+3. Build your project with Dub as usual.
 
 ## Limitations
 Currently Resolve doesn't traverse dependency tree, you have to include everything to `dependencies.json` manually.
