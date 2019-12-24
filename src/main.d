@@ -120,14 +120,32 @@ void run()
             versions[packageName] = JSONValue(["path": JSONValue(dir)]);
     }
     
-    JSONValue dubSelections = JSONValue(
-    [
-        "fileVersion": JSONValue(1),
-        "versions": JSONValue(versions)
-    ]);
+    JSONValue dubSelections;
+
+    if (exists("dub.selections.json"))
+    {
+        dubSelections = parseJSON(readText("dub.selections.json"));
+        if ("versions" in dubSelections)
+        {
+            foreach(name, value; versions)
+                dubSelections["versions"][name] = value;
+        }
+        else
+        {
+            dubSelections["versions"] = JSONValue(versions);
+        }
+    }
+    else
+    {
+        dubSelections = JSONValue(
+        [
+            "fileVersion": JSONValue(1),
+            "versions": JSONValue(versions)
+        ]);
+    }
     
     writeln("Updating dub.selections.json...");
-    write("dub.selections.json", dubSelections.toString(JSONOptions.doNotEscapeSlashes));
+    write("dub.selections.json", dubSelections.toPrettyString(JSONOptions.doNotEscapeSlashes));
     
     writeln("Done. Run \"dub build\".");
 }
