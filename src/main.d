@@ -38,36 +38,44 @@ import std.path: absolutePath;
 struct Git
 {
     string workDir;
-    
+
     this(string dir)
     {
         workDir = dir;
     }
-    
+
     auto cmd(string[] commands)
     {
+       writefln("%s %(%s %)", workDir, commands);
+
         return execute(["git"] ~ commands, null, Config.none, size_t.max, workDir);
     }
-    
+
     auto cmd(string command)
     {
         return cmd([command]);
     }
-    
+
     auto clone(string url)
     {
         return cmd(["clone"] ~ url);
     }
-    
+
     auto checkout(string branchName)
     {
         return cmd(["checkout"] ~ branchName);
     }
-    
+
     auto pull()
     {
         return cmd("pull");
     }
+
+    auto pull(string url, string b)
+    {
+        return cmd(["pull"] ~ url ~ b);
+    }
+
 }
 
 void run()
@@ -75,9 +83,9 @@ void run()
     string s = readText("dependencies.json");
     JSONValue dubConfig = parseJSON(s);
     JSONValue deps = dubConfig["git"];
-    
+
     JSONValue[string] versions;
-    
+
     foreach(string depName, ref JSONValue _dep; deps)
     {
         string[] s = depName.split(":");
@@ -85,26 +93,29 @@ void run()
         string subpackageName = "";
         if (s.length > 1)
             subpackageName = s[1];
-        
+
         JSONValue dep = deps[packageName];
         string repoUrl = dep.array[0].str;
         string branchName = dep.array[1].str;
         string dir = ".resolve/" ~ packageName;
 
-        if (!exists(".resolve")) 
+        if (!exists(".resolve"))
             mkdir(".resolve");
 
         Git repo;
         string dirAbs = absolutePath(dir);
-        
+
         writeln("Resolving ", depName, "@", branchName, " to ", "\"", dir, "\"...");
-        
+
         string gitConfig = dir ~ "/.git/config";
-        
+
         if (exists(gitConfig))
         {
             repo = Git(dirAbs);
-            repo.pull();
+            writefln("pull ret %s",
+            repo.pull(repoUrl, branchName)
+                  );
+
         }
         else
         {
@@ -113,13 +124,13 @@ void run()
             repo = Git(dirAbs);
             repo.checkout(branchName);
         }
-        
+
         if (subpackageName != "")
             versions[depName] = JSONValue(["path": JSONValue(dir)]);
         else
             versions[packageName] = JSONValue(["path": JSONValue(dir)]);
     }
-    
+
     JSONValue dubSelections;
 
     if (exists("dub.selections.json"))
@@ -143,10 +154,10 @@ void run()
             "versions": JSONValue(versions)
         ]);
     }
-    
+
     writeln("Updating dub.selections.json...");
     write("dub.selections.json", dubSelections.toPrettyString(JSONOptions.doNotEscapeSlashes));
-    
+
     writeln("Done. Run \"dub build\".");
 }
 
