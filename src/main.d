@@ -34,6 +34,7 @@ import std.file: readText, exists, mkdir, getcwd, write;
 import std.process: execute, Config;
 import std.json;
 import std.path: absolutePath;
+import std.experimental.logger;
 
 struct Git
 {
@@ -46,8 +47,7 @@ struct Git
 
     auto cmd(string[] commands)
     {
-       writefln("%s %(%s %)", workDir, commands);
-
+        tracef("%s %(%s %)", workDir, commands);
         return execute(["git"] ~ commands, null, Config.none, size_t.max, workDir);
     }
 
@@ -75,13 +75,12 @@ struct Git
     {
         return cmd(["pull"] ~ url ~ b);
     }
-
 }
 
 void run()
 {
-    string s = readText("dependencies.json");
-    JSONValue dubConfig = parseJSON(s);
+    string depJ = readText("dependencies.json");
+    JSONValue dubConfig = parseJSON(depJ);
     JSONValue deps = dubConfig["git"];
 
     JSONValue[string] versions;
@@ -91,10 +90,12 @@ void run()
         string[] s = depName.split(":");
         string packageName = s[0];
         string subpackageName = "";
-        if (s.length > 1)
+        if (s.length > 1) {
             subpackageName = s[1];
+        }
+        tracef("pack:%s sub:%s", packageName, subpackageName);
 
-        JSONValue dep = deps[packageName];
+        JSONValue dep = deps[depName];
         string repoUrl = dep.array[0].str;
         string branchName = dep.array[1].str;
         string dir = ".resolve/" ~ packageName;
@@ -112,10 +113,7 @@ void run()
         if (exists(gitConfig))
         {
             repo = Git(dirAbs);
-            writefln("pull ret %s",
-            repo.pull(repoUrl, branchName)
-                  );
-
+            tracef("pull return: %s", repo.pull(repoUrl, branchName));
         }
         else
         {
@@ -161,7 +159,26 @@ void run()
     writeln("Done. Run \"dub build\".");
 }
 
-void main()
-{
+void main(string[] args) {
+   import std.getopt;
+
+   bool verbose;
+
+   auto opt = getopt(args, "verbose|v", "Verbose", &verbose);
+	if(verbose) {
+		globalLogLevel(LogLevel.trace);
+	} else {
+		globalLogLevel(LogLevel.error);
+	}
+   if (opt.helpWanted) {
+      defaultGetoptPrinter("resolve", opt.options);
+      help;
+   } else {
     run();
+   }
 }
+
+void help() {
+   //writeln("Cmd:");
+}
+
